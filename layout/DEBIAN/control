@@ -1,9 +1,9 @@
-Package: com.yourcompany.photosimageupload
+Package: com.fr0zensun.photosimageupload
 Name: PhotosImageUpload
 Depends: mobilesubstrate
 Version: 0.0.1
 Architecture: iphoneos-arm
-Description: 
-Maintainer: heli0s
-Author: heli0s
+Description: Upload images straight from the photos app!!!
+Maintainer: Fr0zen Sun
+Author: Fr0zen Sun
 Section: Tweaks

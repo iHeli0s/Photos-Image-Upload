@@ -4,10 +4,10 @@ all clean package install::
 	./framework/git-submodule-recur.sh init
 	$(MAKE) $(MAKEFLAGS) MAKELEVEL=0 $@
 else
-
+GO_EASY_ON_ME = 1
 TWEAK_NAME = PhotosImageUpload
-PhotosImageUpload_OBJC_FILES = Tweak.m
-
+PhotosImageUpload_FILES = Tweak.xm MBProgressHUD.m
+PhotosImageUpload_FRAMEWORKS = UIKit CoreFoundation Foundation CoreGraphics QuartzCore 
 include framework/makefiles/common.mk
 include framework/makefiles/tweak.mk
 
