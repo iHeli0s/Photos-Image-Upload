@@ -7,6 +7,7 @@ UIImage *image;
 int buttonNumber;
 BOOL show = NO;
 BOOL addButton = YES;
+BOOL buttonDismiss = NO;
 static id mainView;
 
 @interface PIU : NSObject <NSXMLParserDelegate> {
@@ -171,6 +172,7 @@ id button = [[self buttons] lastObject];
 
 			[[self buttons] insertObject:button atIndex:self.numberOfButtons - 1];
 			buttonNumber = self.numberOfButtons - 1;
+			buttonDismiss = YES;
 			}
 
 %orig;
@@ -199,14 +201,19 @@ addButton = YES;
 
 
 - (void)actionSheet:(id)arg1 clickedButtonAtIndex:(int)arg2 {
-%class WPhotoViewController;
-if(arg2 ==  buttonNumber) {
+%orig;
+if(arg2 ==  buttonNumber && buttonDismiss) {
 show = YES;
 [self printCurrentPhoto:nil];
 
 }
-%orig;
+buttonDismiss = NO;
 }
+- (void)actionSheet:(id)arg1 didDismissWithButtonIndex:(int)arg2 {
+%orig;
+
+}
+
 %end
 %hook PLPhotoPrinter
 - (void)printPhoto:(id)arg1 {
