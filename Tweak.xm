@@ -1,7 +1,8 @@
 #import <UIKit/UIKit.h>
 #import "MBProgressHUD.h"
 #define kHeaderBoundary @"_FS_PIU"
-
+#define PreferencesFilePath @"/var/mobile/Library/Preferences/com.fr0zensun.photosimageupload.plist"
+#define PreferencesChangedNotification "com.fr0zensun.photosimageupload.prefs"
 @class PIU;
 UIImage *image;
 int buttonNumber;
@@ -9,17 +10,22 @@ BOOL show = NO;
 BOOL addButton = YES;
 BOOL buttonDismiss = NO;
 static id mainView;
+static NSDictionary *preferences = nil;
+
 
 @interface PIU : NSObject <NSXMLParserDelegate> {
 NSMutableData *responseData;
 NSMutableArray *array;
 	NSString *currentElement;
 	MBProgressHUD *HUD;
-
+NSString *username;
+	NSString *password;
 	NSMutableDictionary * item;
 	NSMutableString *imageLink, *donePage;
 }
 -(void)sendImage:(NSString *)filePath;
+@property (nonatomic,retain) NSString *username;
+@property (nonatomic,retain) NSString *password;
 @property (nonatomic, retain) NSMutableData *responseData;
 @property (nonatomic, retain) NSMutableArray *array;
 @property (nonatomic, retain) NSMutableString *imageLink, *donePage;
@@ -32,17 +38,27 @@ NSMutableArray *array;
 @end
 
 @implementation PIU
-@synthesize imageLink, donePage, responseData, item, array, currentElement;
+@synthesize imageLink, donePage, responseData, item, array, currentElement,username, password;
 -(void)sendImage:(NSString *)filePath {
 responseData = [[NSMutableData data] retain];
 
    NSURL *url = [NSURL URLWithString:@"http://www.imageshack.us/upload_api.php"];
    UIImage *image = [UIImage imageWithContentsOfFile:filePath];
-	NSData *imageData = UIImageJPEGRepresentation(image, 90);
+	NSData *imageData = UIImagePNGRepresentation(image);
 	NSString *apiKey = @"38ACDGJP6873b68cf45e8f368112528cfd07182f";
+if([[preferences objectForKey:@"useAccount"] boolValue]) {
+
+username = [preferences objectForKey:@"imageShackUsername"];
+password = [preferences objectForKey:@"imageShackPassword"];
+	}
+	else {
+	username = @"93485790874590378696734986789347698";
+	password = @"3498756934769037460734690873469739467";
+	
+	}
  NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:url];
         [req setHTTPMethod:@"POST"];
-NSString *type = @"image/jpeg";
+NSString *type = @"image/png";
         NSString *multipartContentType = [NSString stringWithFormat:@"multipart/form-data; boundary=%@", kHeaderBoundary];
         [req setValue:multipartContentType forHTTPHeaderField:@"Content-type"];
         
@@ -50,10 +66,24 @@ NSString *type = @"image/jpeg";
         NSMutableData *postBody = [NSMutableData data];
         [postBody appendData:[[NSString stringWithFormat:@"\r\n--%@\r\n", kHeaderBoundary] dataUsingEncoding:NSUTF8StringEncoding]];
         
-        [postBody appendData:[@"Content-Disposition: form-data; name=\"fileupload\"; filename=\"iPhoneImage\"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+        [postBody appendData:[@"Content-Disposition: form-data; name=\"fileupload\"; filename=\"photo.png\"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
         [postBody appendData:[[NSString stringWithFormat:@"Content-Type: %@\r\n", type] dataUsingEncoding:NSUTF8StringEncoding]];
         [postBody appendData:[@"Content-Transfer-Encoding: binary\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
         [postBody appendData:imageData];
+		 [postBody appendData:[[NSString stringWithFormat:@"\r\n--%@\r\n", kHeaderBoundary] dataUsingEncoding:NSUTF8StringEncoding]];
+	
+
+        [postBody appendData:[@"Content-Disposition: form-data; name=\"a_username\"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+        [postBody appendData:[[NSString stringWithFormat:@"Content-Type: %@\r\n", type] dataUsingEncoding:NSUTF8StringEncoding]];
+        [postBody appendData:[@"Content-Transfer-Encoding: binary\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+        [postBody appendData:[username dataUsingEncoding:NSUTF8StringEncoding]];
+		[postBody appendData:[[NSString stringWithFormat:@"\r\n--%@\r\n", kHeaderBoundary] dataUsingEncoding:NSUTF8StringEncoding]];
+        
+        [postBody appendData:[@"Content-Disposition: form-data; name=\"a_password\"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+        [postBody appendData:[[NSString stringWithFormat:@"Content-Type: %@\r\n", type] dataUsingEncoding:NSUTF8StringEncoding]];
+        [postBody appendData:[@"Content-Transfer-Encoding: binary\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+        [postBody appendData:[password dataUsingEncoding:NSUTF8StringEncoding]];
+		
         [postBody appendData:[[NSString stringWithFormat:@"\r\n--%@\r\n", kHeaderBoundary] dataUsingEncoding:NSUTF8StringEncoding]];
         
         [postBody appendData:[@"Content-Disposition: form-data; name=\"key\"\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
@@ -63,6 +93,7 @@ NSString *type = @"image/jpeg";
      
         
         [req setHTTPBody:postBody];
+	
 	HUD = [[MBProgressHUD alloc] initWithView:[mainView window]];
 	[[mainView window] addSubview:HUD];
 
@@ -164,7 +195,7 @@ NSString *type = @"image/jpeg";
 %hook UIActionSheet
 
 -(void)presentSheetInView:(id)view { 
-if(addButton && self.numberOfButtons > 2) {
+if(addButton && self.numberOfButtons > 3) {
 [self addButtonWithTitle:@"Upload"];
 id button = [[self buttons] lastObject];
 			[[self buttons] removeObject:button];			
@@ -183,6 +214,7 @@ id button = [[self buttons] lastObject];
 %hook PLPhotoBrowserController
 
 - (void)viewDidAppear {
+
 
 	mainView = [self view];
 %orig;
@@ -237,5 +269,16 @@ else {
 
 
 %end
+static void PreferencesChangedCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
+	[preferences release];
+	preferences = [[NSDictionary alloc] initWithContentsOfFile:PreferencesFilePath];
+}
+__attribute__((constructor)) static void screenshotenhancer_init() {
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
+	preferences = [[NSDictionary alloc] initWithContentsOfFile:PreferencesFilePath];
+	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, PreferencesChangedCallback, CFSTR(PreferencesChangedNotification), NULL, CFNotificationSuspensionBehaviorCoalesce);
+
+	[pool release];
+}
 
